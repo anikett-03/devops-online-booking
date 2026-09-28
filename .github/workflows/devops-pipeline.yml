@@ -1,0 +1,63 @@
+name: DevOps CI/CD & Automated Deployment Pipeline
+
+on:
+  push:
+    branches: [ "main", "master", "dev" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  test-and-lint:
+    name: Build, Lint & Automated Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Application Dependencies
+        run: npm ci
+
+      - name: Run Jest Unit & Integration Tests
+        run: npm test
+
+      - name: Upload Test Coverage & Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: coverage/
+
+  docker-build-and-push:
+    name: Build Docker Image & Verify Container
+    needs: test-and-lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Container Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: online-booking-app:latest
+          load: true
+
+      - name: Test Container Health Check Endpoint
+        run: |
+          docker run -d --name booking-test -p 3000:3000 online-booking-app:latest
+          sleep 5
+          curl --fail http://localhost:3000/health || exit 1
+          curl --fail http://localhost:3000/metrics || exit 1
+          docker stop booking-test

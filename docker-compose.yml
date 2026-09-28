@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # Online Booking Express Application Container
+  booking-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devops-online-booking-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      - booking-data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    networks:
+      - devops-network
+
+  # Prometheus Monitoring Service Container
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: devops-prometheus-monitoring
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    depends_on:
+      - booking-app
+    networks:
+      - devops-network
+
+  # Grafana Dashboard Container (Optional Visualizer)
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: devops-grafana-dashboard
+    restart: always
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    networks:
+      - devops-network
+
+networks:
+  devops-network:
+    driver: bridge
+
+volumes:
+  booking-data:
+  prometheus-data:
