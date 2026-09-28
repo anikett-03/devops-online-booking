@@ -1,0 +1,60 @@
+---
+- name: Deploy Online Booking System DevOps Application & Monitoring
+  hosts: booking_servers
+  become: yes
+  vars:
+    app_directory: /opt/devops-online-booking
+    node_port: 3000
+    prometheus_port: 9090
+
+  tasks:
+    - name: Update apt package cache (Debian/Ubuntu)
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+    - name: Install required system packages
+      package:
+        name:
+          - git
+          - curl
+          - docker.io
+          - docker-compose
+        state: present
+
+    - name: Ensure Docker service is enabled and started
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Ensure target deployment directory exists
+      file:
+        path: "{{ app_directory }}"
+        state: directory
+        mode: '0755'
+
+    - name: Synchronize application code to server
+      copy:
+        src: "../"
+        dest: "{{ app_directory }}"
+        mode: '0755'
+
+    - name: Build and launch containers via Docker Compose
+      command: docker-compose up --build -d
+      args:
+        chdir: "{{ app_directory }}"
+
+    - name: Wait for application service to be healthy
+      uri:
+        url: "http://localhost:{{ node_port }}/health"
+        status_code: 200
+      register: health_result
+      until: health_result.status == 200
+      retries: 10
+      delay: 3
+
+    - name: Display deployment success summary
+      debug:
+        msg: "Application successfully deployed! Web UI active at http://{{ ansible_host }}:{{ node_port }} and Prometheus at http://{{ ansible_host }}:{{ prometheus_port }}"
