@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+data/db.json
+tests/test_db.json
+.git
+.gitignore
+.github
+Dockerfile
+docker-compose.yml
+Jenkinsfile
+ansible
+monitoring
+README.md

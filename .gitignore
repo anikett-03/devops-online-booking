@@ -1,0 +1,7 @@
+node_modules/
+npm-debug.log*
+data/db.json
+tests/test_db.json
+.DS_Store
+*.log
+coverage/

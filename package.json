@@ -1,0 +1,37 @@
+{
+  "name": "devops-online-booking",
+  "version": "1.0.0",
+  "description": "Online Booking & Reservation System with End-to-End DevOps CI/CD, Containerization, Ansible & Monitoring Pipeline",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "jest --detectOpenHandles --forceExit"
+  },
+  "keywords": [
+    "devops",
+    "jenkins",
+    "github-actions",
+    "docker",
+    "ansible",
+    "prometheus",
+    "booking-system"
+  ],
+  "author": "Student",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "prom-client": "^15.1.3"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ]
+  }
+}
