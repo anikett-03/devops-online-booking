@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Book - DevOps Online Booking Platform</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Navigation Header -->
+  <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-40 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-2.5 rounded-xl shadow-md">
+          <i class="fa-solid fa-calendar-check text-white text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold tracking-tight text-white">SmartBook DevOps</h1>
+          <p class="text-xs text-slate-400">Automated Room & Resource Reservation System</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-2"></span>
+          Pipeline Operational
+        </span>
+        <a href="/metrics" target="_blank" class="text-xs text-slate-400 hover:text-white px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/80 transition">
+          <i class="fa-solid fa-chart-line mr-1.5"></i>Prometheus Metrics
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Overview Stats Banner -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+      <div class="bg-slate-800/80 backdrop-blur border border-slate-700/80 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Resources</p>
+            <h3 id="stat-resources" class="text-2xl font-bold text-white mt-1">--</h3>
+          </div>
+          <div class="p-3 bg-blue-500/10 text-blue-400 rounded-xl border border-blue-500/20">
+            <i class="fa-solid fa-door-open text-xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-800/80 backdrop-blur border border-slate-700/80 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Active Bookings</p>
+            <h3 id="stat-active" class="text-2xl font-bold text-emerald-400 mt-1">--</h3>
+          </div>
+          <div class="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+            <i class="fa-solid fa-clock-rotate-left text-xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-800/80 backdrop-blur border border-slate-700/80 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Lifetime Bookings</p>
+            <h3 id="stat-total" class="text-2xl font-bold text-indigo-400 mt-1">--</h3>
+          </div>
+          <div class="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">
+            <i class="fa-solid fa-list-check text-xl"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-800/80 backdrop-blur border border-slate-700/80 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">System Health</p>
+            <h3 id="stat-health" class="text-2xl font-bold text-emerald-400 mt-1">Healthy</h3>
+          </div>
+          <div class="p-3 bg-purple-500/10 text-purple-400 rounded-xl border border-purple-500/20">
+            <i class="fa-solid fa-server text-xl"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Available Resources Section -->
+    <section>
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-cubes text-indigo-400"></i>
+            Available Spaces & Rooms
+          </h2>
+          <p class="text-sm text-slate-400">Select a venue or facility to reserve your preferred schedule.</p>
+        </div>
+      </div>
+
+      <div id="resources-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Resource Cards Loaded Dynamically -->
+        <div class="col-span-3 py-12 text-center text-slate-400">
+          <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2"></i>
+          <p>Loading available resources...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Bookings Table Section -->
+    <section class="bg-slate-800/90 border border-slate-700 rounded-2xl p-6 shadow-xl space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-700 pb-4">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-book-bookmark text-blue-400"></i>
+            Reservation Management
+          </h2>
+          <p class="text-xs text-slate-400">Real-time status of all scheduled facility bookings.</p>
+        </div>
+        <button onclick="refreshData()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-medium rounded-xl transition flex items-center gap-2">
+          <i class="fa-solid fa-rotate-right"></i> Refresh Table
+        </button>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm text-slate-300">
+          <thead class="text-xs uppercase bg-slate-900/60 text-slate-400 font-semibold border-b border-slate-700">
+            <tr>
+              <th class="py-3.5 px-4">Booking ID</th>
+              <th class="py-3.5 px-4">Resource</th>
+              <th class="py-3.5 px-4">Reserved By</th>
+              <th class="py-3.5 px-4">Date & Time</th>
+              <th class="py-3.5 px-4">Purpose</th>
+              <th class="py-3.5 px-4">Status</th>
+              <th class="py-3.5 px-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="bookings-table-body" class="divide-y divide-slate-700/60">
+            <!-- Table Rows Loaded Dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Booking Modal -->
+  <div id="booking-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-4">
+        <div>
+          <h3 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-calendar-plus text-indigo-400"></i> Reserve Venue
+          </h3>
+          <p id="modal-resource-name" class="text-xs text-indigo-300 font-medium mt-0.5">Resource Name</p>
+        </div>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="booking-form" onsubmit="handleBookingSubmit(event)" class="space-y-4">
+        <input type="hidden" id="modal-resource-id">
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Your Full Name</label>
+          <input type="text" id="customer-name" required placeholder="e.g. Jane Doe" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Email Address</label>
+          <input type="email" id="customer-email" required placeholder="jane@example.com" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Date</label>
+            <input type="date" id="booking-date" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Start Time</label>
+            <input type="time" id="start-time" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">End Time</label>
+            <input type="time" id="end-time" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Purpose / Notes</label>
+          <input type="text" id="booking-purpose" placeholder="e.g. Client Presentation & Strategy" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div id="modal-error" class="hidden p-3 bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs rounded-xl"></div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium rounded-xl">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-lg transition">Confirm Reservation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- DevOps Pipeline Footer Banner -->
+  <footer class="bg-slate-800/80 border-t border-slate-700 py-4 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-400 gap-2">
+      <div class="flex items-center space-x-2">
+        <i class="fa-solid fa-diagram-project text-indigo-400"></i>
+        <span>DevOps Pipeline: <strong>Git → GitHub Actions / Jenkins → Docker Container → Ansible VM → Prometheus</strong></span>
+      </div>
+      <div>
+        <span>TAE-II DevOps Project Submission &copy; 2026</span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    let resourcesCache = [];
+
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById('stat-resources').innerText = data.data.totalResources;
+          document.getElementById('stat-active').innerText = data.data.activeBookings;
+          document.getElementById('stat-total').innerText = data.data.totalBookings;
+        }
+      } catch (e) {
+        console.error('Failed to load stats', e);
+      }
+    }
+
+    async function loadResources() {
+      try {
+        const res = await fetch('/api/resources');
+        const json = await res.json();
+        if (json.success) {
+          resourcesCache = json.data;
+          const container = document.getElementById('resources-grid');
+          container.innerHTML = json.data.map(r => `
+            <div class="bg-slate-800/90 border border-slate-700 rounded-2xl p-5 shadow-lg flex flex-col justify-between hover:border-slate-600 transition">
+              <div>
+                <div class="flex justify-between items-start">
+                  <span class="text-xs font-semibold px-2.5 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg">${r.type}</span>
+                  <span class="text-xs text-slate-400 font-medium"><i class="fa-solid fa-users mr-1"></i>Cap: ${r.capacity}</span>
+                </div>
+                <h3 class="text-lg font-bold text-white mt-3">${r.name}</h3>
+                <p class="text-xs text-slate-400 mt-1"><i class="fa-solid fa-location-dot mr-1"></i>${r.location}</p>
+                <p class="text-sm font-semibold text-emerald-400 mt-3">$${r.pricePerHour} <span class="text-xs text-slate-400 font-normal">/ hour</span></p>
+              </div>
+              <button onclick="openBookingModal('${r.id}')" class="mt-5 w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                <i class="fa-solid fa-calendar-plus"></i> Book Space
+              </button>
+            </div>
+          `).join('');
+        }
+      } catch (e) {
+        console.error('Failed to load resources', e);
+      }
+    }
+
+    async function loadBookings() {
+      try {
+        const res = await fetch('/api/bookings');
+        const json = await res.json();
+        if (json.success) {
+          const body = document.getElementById('bookings-table-body');
+          if (json.data.length === 0) {
+            body.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-slate-500 text-xs">No bookings recorded yet.</td></tr>`;
+            return;
+          }
+          body.innerHTML = json.data.map(b => {
+            const resName = resourcesCache.find(r => r.id === b.resourceId)?.name || b.resourceId;
+            const isConfirmed = b.status === 'Confirmed';
+            return `
+              <tr class="hover:bg-slate-700/30 transition">
+                <td class="py-3 px-4 text-xs font-mono text-slate-400">${b.id}</td>
+                <td class="py-3 px-4 font-semibold text-white">${resName}</td>
+                <td class="py-3 px-4 text-slate-300">
+                  <div class="font-medium">${b.customerName}</div>
+                  <div class="text-xs text-slate-500">${b.customerEmail}</div>
+                </td>
+                <td class="py-3 px-4 text-slate-300 text-xs">
+                  <div><i class="fa-regular fa-calendar mr-1"></i>${b.date}</div>
+                  <div class="text-slate-400">${b.startTime} - ${b.endTime}</div>
+                </td>
+                <td class="py-3 px-4 text-slate-400 text-xs">${b.purpose}</td>
+                <td class="py-3 px-4">
+                  <span class="px-2.5 py-1 text-xs font-semibold rounded-full ${isConfirmed ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+                    ${b.status}
+                  </span>
+                </td>
+                <td class="py-3 px-4 text-right">
+                  ${isConfirmed ? `
+                    <button onclick="cancelBooking('${b.id}')" class="text-xs text-rose-400 hover:text-rose-300 bg-rose-500/10 px-2.5 py-1 rounded-lg border border-rose-500/20 transition">
+                      Cancel
+                    </button>
+                  ` : `<span class="text-xs text-slate-600">--</span>`}
+                </td>
+              </tr>
+            `;
+          }).join('');
+        }
+      } catch (e) {
+        console.error('Failed to load bookings', e);
+      }
+    }
+
+    function openBookingModal(resourceId) {
+      const resource = resourcesCache.find(r => r.id === resourceId);
+      if (!resource) return;
+
+      document.getElementById('modal-resource-id').value = resource.id;
+      document.getElementById('modal-resource-name').innerText = `${resource.name} (${resource.type})`;
+      document.getElementById('modal-error').classList.add('hidden');
+
+      // Set default date to today or tomorrow
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('booking-date').value = today;
+      document.getElementById('start-time').value = "10:00";
+      document.getElementById('end-time').value = "11:00";
+
+      document.getElementById('booking-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('booking-modal').classList.add('hidden');
+      document.getElementById('booking-form').reset();
+    }
+
+    async function handleBookingSubmit(e) {
+      e.preventDefault();
+      const errorDiv = document.getElementById('modal-error');
+      errorDiv.classList.add('hidden');
+
+      const payload = {
+        resourceId: document.getElementById('modal-resource-id').value,
+        customerName: document.getElementById('customer-name').value,
+        customerEmail: document.getElementById('customer-email').value,
+        date: document.getElementById('booking-date').value,
+        startTime: document.getElementById('start-time').value,
+        endTime: document.getElementById('end-time').value,
+        purpose: document.getElementById('booking-purpose').value
+      };
+
+      try {
+        const res = await fetch('/api/bookings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          closeModal();
+          refreshData();
+        } else {
+          errorDiv.innerText = json.error || 'Failed to complete booking';
+          errorDiv.classList.remove('hidden');
+        }
+      } catch (err) {
+        errorDiv.innerText = 'Network error. Please try again.';
+        errorDiv.classList.remove('hidden');
+      }
+    }
+
+    async function cancelBooking(id) {
+      if (!confirm('Are you sure you want to cancel this booking?')) return;
+      try {
+        const res = await fetch(`/api/bookings/${id}/cancel`, { method: 'PATCH' });
+        const json = await res.json();
+        if (json.success) {
+          refreshData();
+        }
+      } catch (err) {
+        alert('Failed to cancel booking.');
+      }
+    }
+
+    function refreshData() {
+      loadStats();
+      loadResources();
+      loadBookings();
+    }
+
+    // Initial boot
+    refreshData();
+  </script>
+</body>
+</html>
