@@ -21,11 +21,14 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Security best practice: Run app as non-root node user
-USER node
-
 # Copy built application and modules from builder stage
 COPY --chown=node:node --from=builder /app ./
+
+# Create writable data folder for the non-root user (must run as root)
+RUN mkdir -p /app/data && chown -R node:node /app/data
+
+# Security best practice: Run app as non-root node user
+USER node
 
 # Expose port
 EXPOSE 3000
