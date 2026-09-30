@@ -4,20 +4,18 @@ pipeline {
     environment {
         APP_NAME = 'devops-online-booking-app'
         IMAGE_TAG = "v${BUILD_NUMBER}"
-        REGISTRY = 'docker.io/student'
-        CONTAINER_PORT = '3000'
     }
 
     options {
         buildDiscarder(logRotator(numToKeepStr: '10'))
         timeout(time: 15, unit: 'MINUTES')
-        ansiColor('xterm')
+        timestamps()
     }
 
     stages {
         stage('Checkout Source') {
             steps {
-                echo '=== Stage 1: Checking out latest source code from Repository ==='
+                echo '=== Stage 1: Checking out source code ==='
                 checkout scm
             }
         }
@@ -29,50 +27,50 @@ pipeline {
             }
         }
 
-        stage('Automated Testing & Quality Checks') {
+        stage('Automated Testing') {
             steps {
-                echo '=== Stage 3: Executing Unit & Integration Test Suite (Jest) ==='
+                echo '=== Stage 3: Running Jest test suite ==='
                 sh 'npm test'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                echo '=== Stage 4: Containerizing application with Docker ==='
+                echo '=== Stage 4: Building Docker image ==='
                 sh "docker build -t ${APP_NAME}:${IMAGE_TAG} -t ${APP_NAME}:latest ."
             }
         }
 
-        stage('Container Vulnerability & Health Check') {
+        stage('Container Health Check') {
             steps {
-                echo '=== Stage 5: Verifying Container Health & Readiness ==='
-                sh "docker run -d --name test-${BUILD_NUMBER} -p 3005:3000 ${APP_NAME}:${IMAGE_TAG}"
-                sh 'sleep 5'
-                sh 'curl --fail http://localhost:3005/health || exit 1'
-                sh "docker stop test-${BUILD_NUMBER} && docker rm test-${BUILD_NUMBER}"
+                echo '=== Stage 5: Verifying container health ==='
+                sh "docker run -d --name test-${BUILD_NUMBER} ${APP_NAME}:${IMAGE_TAG}"
+                sh 'sleep 8'
+                sh "docker exec test-${BUILD_NUMBER} wget -qO- http://localhost:3000/health"
+                sh "docker rm -f test-${BUILD_NUMBER}"
             }
         }
 
         stage('Deploy Application') {
             steps {
-                echo '=== Stage 6: Deploying Multi-Container Environment via Docker Compose ==='
-                sh 'docker-compose down || true'
-                sh 'docker-compose up --build -d'
-                echo 'Deployment successful! Application accessible at http://localhost:3000'
+                echo '=== Stage 6: Deploying with Docker Compose ==='
+                sh 'docker compose down || true'
+                sh 'docker compose up --build -d booking-app'
+                echo 'Deployed! App available at http://localhost:3000'
             }
         }
     }
 
     post {
         always {
-            echo '=== Pipeline Execution Completed ==='
+            sh "docker rm -f test-${BUILD_NUMBER} || true"
             cleanWs()
         }
         success {
-            echo 'SUCCESS: DevOps Pipeline completed successfully!'
+            echo 'SUCCESS: Pipeline completed successfully!'
         }
         failure {
-            echo 'FAILURE: Pipeline execution failed. Please inspect build output logs.'
+            echo 'FAILURE: Check the console output above.'
         }
     }
 }
